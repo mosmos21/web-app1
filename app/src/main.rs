@@ -15,6 +15,8 @@ fn echo (params: web::Json<PostEchoParams>) -> HttpResponse {
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+    let port = std::env::var("PORT").unwrap();
+
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
@@ -23,7 +25,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .service(web::resource("/api/echo").route(web::post().to(echo)))
     })
-        .bind("0.0.0.0:8000")?
+        .bind(format!("0.0.0.0:{}",port))?
         .run()
         .await
 }
