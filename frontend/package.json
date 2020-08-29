@@ -3,7 +3,8 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server --config webpack.devserver.js"
+    "start": "webpack-dev-server --config webpack.devserver.js",
+    "build": "webpack --config webpack.prod.js"
   },
   "devDependencies": {
     "@types/react": "^16.9.48",
