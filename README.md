@@ -9,6 +9,6 @@ gcloud builds submit --project private-develop --tag gcr.io/private-develop/echo
 gcloud builds submit --project private-develop --tag gcr.io/private-develop/echo-nginx --timeout=30000s frontend/
 
 # Cloud Run にデプロイ
-gcloud run deploy --image gcr.io/private-develop/echo-app
-gcloud run deploy --image gcr.io/private-develop/echo-nginx
+gcloud beta run deploy --platform managed --region asia-northeast1 --image gcr.io/private-develop/echo-app echo-app
+gcloud beta run deploy --platform managed --region asia-northeast1 --image gcr.io/private-develop/echo-nginx echo-nginx
 ```
