@@ -10,7 +10,7 @@ struct PostEchoParams {
 
 fn echo (params: web::Json<PostEchoParams>) -> HttpResponse {
     let value = &params.value;
-    HttpResponse::Ok().body(format!("echo from server: {}", value))
+    HttpResponse::Ok().body(format!("Echo from api server: {}", value))
 }
 
 #[actix_rt::main]
