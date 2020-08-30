@@ -1,0 +1,51 @@
+steps:
+- id: バックエンドイメージを作成
+  name: gcr.io/cloud-builders/docker
+  timeout: 36000s
+  entrypoint: bash
+  args:
+  - -c
+  - docker build -t gcr.io/${PROJECT_ID}/echo-app app/
+- id: バックエンドイメージをpush
+  name: gcr.io/cloud-builders/docker
+  args:
+  - push
+  - gcr.io/${PROJECT_ID}/echo-app
+- id: バックエンドイメージをデプロイ
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+  - -c
+  - |
+    gcloud run deploy echo-app \
+      --platform managed \
+      --region asia-northeast1 \
+      --allow-unauthenticated \
+      --image gcr.io/$PROJECT_ID/echo-app
+- id: フロントエンドイメージを作成
+  name: gcr.io/cloud-builders/docker
+  timeout: 36000s
+  entrypoint: bash
+  args:
+  - -c
+  - |
+    docker build \
+      -t gcr.io/${PROJECT_ID}/echo-nginx \
+      frontend/
+- id: フロントエンドイメージをpush
+  name: gcr.io/cloud-builders/docker
+  args:
+  - push
+  - gcr.io/${PROJECT_ID}/echo-nginx
+- id: フロントエンドイメージをデプロイ
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+  - -c
+  - |
+    gcloud run deploy echo-nginx \
+      --platform managed \
+      --region asia-northeast1 \
+      --allow-unauthenticated \
+      --image gcr.io/$PROJECT_ID/echo-nginx
+timeout: 36000s
