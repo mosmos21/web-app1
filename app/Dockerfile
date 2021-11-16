@@ -1,10 +1,17 @@
-FROM rust:1.43 as builder
+ARG BUILDER_IMAGE_NAME
+ARG SCCACHE_GCS_BUCKET
+
+FROM ${BUILDER_IMAGE_NAME} as builder
 
 WORKDIR /echo_app
+
 COPY src /echo_app/src
 COPY Cargo.lock /echo_app
 COPY Cargo.toml /echo_app
-RUN cargo build --release
+
+ENV SCCACHE_GCS_BUCKET ${SCCACHE_GCS_BUCKET}
+
+RUN RUSTC_WRAPPER=$(which sccache) cargo build --release
 
 # --------
 

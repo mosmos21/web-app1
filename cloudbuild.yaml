@@ -1,16 +1,48 @@
 steps:
+- id: app用ビルドイメージタグの生成
+  name: gcr.io/cloud-builders/git
+  entrypoint: bash
+  args:
+  - -c
+  - echo $(cat .docker/app_builder/Dockerfile | sha1sum | awk '{print $1}') > __APP_BUILDER_IMAGE_TAG__
+- id: app用ビルドイメージの確認
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+  - -c
+  - |
+    gcloud container images list-tags \
+        --filter="tags:$(cat __APP_BUILDER_IMAGE_TAG__)" \
+        --format=json gcr.io/private-develop/rust-builders > __EXISTS_TAG_NAMES__
+- id: app用ビルドイメージの作成
+  name: gcr.io/cloud-builders/docker
+  entrypoint: bash
+  args:
+  - -c
+  - |
+    echo gcr.io/${PROJECT_ID}/app_builder:$(cat __APP_BUILDER_IMAGE_TAG__) > __APP_BUILDER_IMAGE_NAME__
+    if [[ $(cat __EXISTS_TAG_NAMES__) == "[]" ]]; then
+      echo "Build new app_builder image: " $(cat __APP_BUILDER_IMAGE_NAME__)
+      docker image build \
+        -f .docker/app_builder/Dockerfile \
+        -t $(cat __APP_BUILDER_IMAGE_NAME__)\
+        .
+      docker push $(cat __APP_BUILDER_IMAGE_NAME__)
+    else
+      echo "App builder image already exists. Skip build image: " $(cat __APP_BUILDER_IMAGE_NAME__)
+    fi
 - id: バックエンドイメージを作成
   name: gcr.io/cloud-builders/docker
   timeout: 36000s
   entrypoint: bash
   args:
   - -c
-  - docker build -t gcr.io/${PROJECT_ID}/echo-app app/
-- id: バックエンドイメージをpush
-  name: gcr.io/cloud-builders/docker
-  args:
-  - push
-  - gcr.io/${PROJECT_ID}/echo-app
+  - |
+    docker build \
+      -t gcr.io/${PROJECT_ID}/echo-app
+      --build-arg BUILDER_IMAGE_NAME=$(cat __APP_BUILDER_IMAGE_NAME__) \
+      app/
+    docker push gcr.io/${PROJECT_ID}/echo-app
 - id: バックエンドイメージをデプロイ
   name: gcr.io/cloud-builders/gcloud
   entrypoint: bash
@@ -21,7 +53,7 @@ steps:
       --platform managed \
       --region asia-northeast1 \
       --allow-unauthenticated \
-      --image gcr.io/$PROJECT_ID/echo-app
+      --image gcr.io/${PROJECT_ID}/echo-app
 - id: フロントエンドイメージを作成
   name: gcr.io/cloud-builders/docker
   timeout: 36000s
@@ -29,14 +61,8 @@ steps:
   args:
   - -c
   - |
-    docker build \
-      -t gcr.io/${PROJECT_ID}/echo-nginx \
-      frontend/
-- id: フロントエンドイメージをpush
-  name: gcr.io/cloud-builders/docker
-  args:
-  - push
-  - gcr.io/${PROJECT_ID}/echo-nginx
+    docker build -t gcr.io/${PROJECT_ID}/echo-nginx frontend/
+    docker push gcr.io/${PROJECT_ID}/echo-nginx
 - id: フロントエンドイメージをデプロイ
   name: gcr.io/cloud-builders/gcloud
   entrypoint: bash

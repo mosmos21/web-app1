@@ -6,3 +6,5 @@ app/target/
 frontend/.idea/
 frontend/node_modules/
 frontend/public/assets/index.js
+
+.env
